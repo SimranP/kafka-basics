@@ -25,12 +25,13 @@ public class ProducerDemo {
     for (int i = 0; i < 12; i++) {
       //create producer record
 
-      ProducerRecord<String, String> message = new ProducerRecord<>("hello_world", "Hi, I am Java Producer");
+      String key = "id_" + i;
+      ProducerRecord<String, String> message = new ProducerRecord<>("hello_world", key, "Hi, I am Java Producer");
 
       //send message
       kafkaProducer.send(message, (metadata, exception) -> {
         if (exception == null) {
-          logger.info("Successfully produced message on --->" + metadata.toString());
+          logger.info("Successfully produced message with " + key + " on --->" + metadata.toString());
         } else {
           logger.error("Error received", exception);
         }
