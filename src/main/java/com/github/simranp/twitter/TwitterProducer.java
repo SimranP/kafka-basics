@@ -1,10 +1,7 @@
 package com.github.simranp.twitter;
 
 import com.twitter.hbc.httpclient.BasicClient;
-import org.apache.kafka.clients.producer.Callback;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +27,16 @@ public class TwitterProducer {
 
     KafkaProducer<String, String> kafkaProducer = createKafkaProducer();
 
+    // add a shutdown hook
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      logger.info("stopping application...");
+      logger.info("shutting down client from twitter...");
+      twitterClient.stop();
+      logger.info("closing producer...");
+      kafkaProducer.close();
+      logger.info("done!");
+    }));
+
     while (!twitterClient.isDone()) {
       String msg = null;
       try {
@@ -46,18 +53,7 @@ public class TwitterProducer {
           }
         });
       }
-
     }
-
-    // add a shutdown hook
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      logger.info("stopping application...");
-      logger.info("shutting down client from twitter...");
-      twitterClient.stop();
-      logger.info("closing producer...");
-      kafkaProducer.close();
-      logger.info("done!");
-    }));
 
     logger.info("End of application");
   }
@@ -68,6 +64,12 @@ public class TwitterProducer {
     properties.put(BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     properties.put(KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
     properties.put(VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+
+    // create safe Producer
+    properties.setProperty(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
+    properties.setProperty(ProducerConfig.ACKS_CONFIG, "all");
+    properties.setProperty(ProducerConfig.RETRIES_CONFIG, Integer.toString(Integer.MAX_VALUE));
+    properties.setProperty(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, "5"); // kafka 2.0 >= 1.1 so we can keep this as 5. Use 1 otherwise.
 
     //create kafka producer
     return new KafkaProducer<>(properties);
