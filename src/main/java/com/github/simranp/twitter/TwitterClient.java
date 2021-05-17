@@ -24,7 +24,7 @@ public class TwitterClient {
     Hosts hosebirdHosts = new HttpHosts(Constants.STREAM_HOST);
     StatusesFilterEndpoint hosebirdEndpoint = new StatusesFilterEndpoint();
     // Optional: set up some followings and track terms
-    List<String> terms = Lists.newArrayList("kafka");
+    List<String> terms = Lists.newArrayList("bitcoin", "usa", "india", "covid", "virus");
     hosebirdEndpoint.trackTerms(terms);
     String apiKey = System.getenv("TWITTER_API_KEY");
     String apiSecret = System.getenv("TWITTER_API_SECRET_KEY");
