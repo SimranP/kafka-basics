@@ -4,23 +4,24 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Properties;
 
-public class ConsumerDemoGroups {
+//to replay certain messages
+public class ConsumerDemoAssignSeek {
 
     public static void main(String[] args) {
 
-        Logger logger = LoggerFactory.getLogger(ConsumerDemoGroups.class.getName());
+        Logger logger = LoggerFactory.getLogger(ConsumerDemoAssignSeek.class.getName());
 
         String bootstrapServers = "127.0.0.1:9092";
-        String groupId = "my_new_application";
+        String groupId = "hello_world_application";
         String topic = "hello_world";
 
         // create consumer configs
@@ -34,8 +35,11 @@ public class ConsumerDemoGroups {
         // create consumer
         KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(properties);
 
-        // subscribe consumer to our topic(s)
-        consumer.subscribe(Collections.singleton(topic));
+        TopicPartition partitionToReadFrom = new TopicPartition(topic, 0);
+        consumer.assign(Collections.singleton(partitionToReadFrom));
+
+        int offsetToReadFrom = 12;
+        consumer.seek(partitionToReadFrom, offsetToReadFrom);
 
         // poll for new data
         while(true){
