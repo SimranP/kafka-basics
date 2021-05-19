@@ -1,5 +1,6 @@
 package com.github.simranp.twitter;
 
+import com.google.gson.JsonParser;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -50,7 +51,9 @@ public class TwitterKafkaConsumer {
     while (true) {
       ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
       for (ConsumerRecord<String, String> record : records) {
-        indexRequest.source(record.value(), XContentType.JSON);
+        indexRequest
+          .source(record.value(), XContentType.JSON)
+          .id(extractIdFromTweet(record.value()));
         IndexResponse index = client.index(indexRequest, RequestOptions.DEFAULT);
         String id = index.getId();
         logger.info(id);
@@ -58,6 +61,14 @@ public class TwitterKafkaConsumer {
     }
 
 //    client.close();
+  }
+
+  private String extractIdFromTweet(String record) {
+    JsonParser jsonParser = new JsonParser();
+    return jsonParser.parse(record)
+      .getAsJsonObject()
+      .get("id_str")
+      .getAsString();
   }
 
   public static void main(String[] args) throws IOException {
