@@ -36,6 +36,8 @@ public class TwitterKafkaConsumer {
     properties.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
     properties.setProperty(ConsumerConfig.GROUP_ID_CONFIG, groupId);
     properties.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+    properties.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+    properties.setProperty(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "10");
 
     // create consumer
     KafkaConsumer<String, String> consumer = new KafkaConsumer<>(properties);
@@ -50,6 +52,7 @@ public class TwitterKafkaConsumer {
 
     while (true) {
       ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
+      logger.info("Received "+records.count()+ " records");
       for (ConsumerRecord<String, String> record : records) {
         indexRequest
           .source(record.value(), XContentType.JSON)
@@ -57,6 +60,14 @@ public class TwitterKafkaConsumer {
         IndexResponse index = client.index(indexRequest, RequestOptions.DEFAULT);
         String id = index.getId();
         logger.info(id);
+      }
+      logger.info("Committing offsets...");
+      consumer.commitSync();
+      logger.info("Offsets have been committed");
+      try {
+        Thread.sleep(1000);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
       }
     }
 
