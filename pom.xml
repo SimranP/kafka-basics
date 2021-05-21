@@ -12,6 +12,7 @@
         <module>hello-world</module>
         <module>twitter-kafka-producer</module>
         <module>twitter-kafka-consumer</module>
+        <module>kafka-streams</module>
     </modules>
 
     <properties>
